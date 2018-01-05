@@ -44,7 +44,7 @@ function crawlUrl($url)
             else
             {
                 //print ASIN in error log
-                print '<br /><span style="color:red">'.$match[1].'</span><br />';
+                print '<br /><span style="color:red">'.$match[1].' </span>'.$data.'<br />';
             }
         }
         
@@ -66,7 +66,7 @@ class AmazonParse
 {
     public function parse($match)
     {
-        sleep(rand(1,2));
+        sleep(rand(5, 10));
         $access_key = '';//ACCESS_KEY
         $secure_access_key = '';//SECURE_KEY
         $associatetag = '';//ASSOTIATE_ID
@@ -108,7 +108,10 @@ class AmazonParse
         curl_close($ch2);
 
         if ($info['http_code'] != '200') 
+        {
+            echo $data;
             return false;
+        }
 
         return $data;
     }
@@ -121,7 +124,7 @@ class AmazonParse
         $arr[1] = $xml->Items->Item->ItemAttributes->PartNumber;
         $arr[2] = $xml->Items->Item->ItemAttributes->Title;
         $arr[3] = $xml->Items->Item->ASIN;
-        $arr[4] = (int)str_replace(',', '', $xml->Items->Item->ItemAttributes->ListPrice->FormattedPrice);
+        $arr[4] = (int)str_replace(',', '', str_replace('INR ','',$xml->Items->Item->ItemAttributes->ListPrice->FormattedPrice));
         $arr[5] = $xml->Items->Item->DetailPageURL;
         return $arr;
     }
@@ -154,31 +157,38 @@ class AmazonParse
         );
 
         $fp = fopen('csv.csv', 'w');
-        fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
+
+        //MSEXCEL need BOM
+        // fputs($fp, $bom =( chr(0xEF) . chr(0xBB) . chr(0xBF) ));
+
         self::myFputcsv($fp, $names);
         fclose($fp);
     }
 
     function  myFputcsv($fp, $csv_arr, $delimiter = ';', $enclosure = '"')
     {
-        if (!is_array($csv_arr))
-        {
-            return(false);
-        }
-        for ($i = 0, $n = count($csv_arr); $i < $n;  $i ++)
-        {
-            if (!is_numeric($csv_arr[$i]))
-            {
-                $csv_arr[$i] =  $enclosure.str_replace($enclosure, $enclosure.$enclosure,  $csv_arr[$i]).$enclosure;
-            }
-            if (($delimiter == '.') && (is_numeric($csv_arr[$i])))
-            {
-                $csv_arr[$i] =  $enclosure.$csv_arr[$i].$enclosure;
-            }
-        }
-        $str = implode($delimiter,  $csv_arr).PHP_EOL;
-        fwrite($fp, $str);
-        return strlen($str);
+        //DEFAULT
+        fputcsv($fp, $csv_arr, $delimeter, $enclosure);
+
+        //MSEXCEL
+        // if (!is_array($csv_arr))
+        // {
+        //     return(false);
+        // }
+        // for ($i = 0, $n = count($csv_arr); $i < $n;  $i ++)
+        // {
+        //     if (!is_numeric($csv_arr[$i]))
+        //     {
+        //         $csv_arr[$i] =  $enclosure.str_replace($enclosure, $enclosure.$enclosure,  $csv_arr[$i]).$enclosure;
+        //     }
+        //     if (($delimiter == '.') && (is_numeric($csv_arr[$i])))
+        //     {
+        //         $csv_arr[$i] =  $enclosure.$csv_arr[$i].$enclosure;
+        //     }
+        // }
+        // $str = implode($delimiter,  $csv_arr).PHP_EOL;
+        // fwrite($fp, $str);
+        // return strlen($str);
     }
 }
 ?>
